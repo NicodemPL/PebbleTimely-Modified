@@ -387,8 +387,8 @@ void weather_layer_update_callback(Layer *me, GContext* ctx) {
   setColors(ctx);
 #if HIDE_BATTERY_DISPLAY
   // Weather icon and temperature in statusbar (top-left)
-  graphics_draw_text(ctx, cond_current, climacons, GRect(0,-4,26,26), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
-  graphics_draw_text(ctx, temp_current, fonts_get_system_font(FONT_KEY_GOTHIC_14), GRect(24,2,26,20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
+  graphics_draw_text(ctx, cond_current, climacons, GRect(0,-6,30,30), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+  graphics_draw_text(ctx, temp_current, fonts_get_system_font(FONT_KEY_GOTHIC_14), GRect(28,2,26,20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
 #else
   graphics_draw_text(ctx, cond_current, climacons, GRect(2,16,34,34), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL); 
   graphics_draw_text(ctx, temp_current, fonts_get_system_font(FONT_KEY_GOTHIC_24), GRect(2,42,36,36), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
@@ -1018,8 +1018,8 @@ void position_date_layer() {
     }
   }
 #if HIDE_BATTERY_DISPLAY
-  // Position date at top-right, leaving room for weather icon on left
-  layer_set_frame( text_layer_get_layer(date_layer), GRect(40, REL_CLOCK_DATE_TOP + date_vert_offset, 102, REL_CLOCK_DATE_HEIGHT) );
+  // Position date at top-right, leaving room for weather icon on left (1 pixel higher)
+  layer_set_frame( text_layer_get_layer(date_layer), GRect(40, REL_CLOCK_DATE_TOP + date_vert_offset - 1, 102, REL_CLOCK_DATE_HEIGHT) );
 #else
   layer_set_frame( text_layer_get_layer(date_layer), GRect(REL_CLOCK_DATE_LEFT, REL_CLOCK_DATE_TOP + date_vert_offset, REL_CLOCK_DATE_WIDTH, REL_CLOCK_DATE_HEIGHT) );
 #endif
@@ -1052,7 +1052,7 @@ void position_time_layer() {
   (void)weather_offset; // Suppress unused warning when HIDE_BATTERY_DISPLAY is set
 #if HIDE_BATTERY_DISPLAY
   // Position weather layer at top-left within statusbar (full statusbar width available now)
-  layer_set_frame( weather_layer, GRect(0, 0, 50, 24) );
+  layer_set_frame( weather_layer, GRect(0, 0, 56, 24) );
 #else
   layer_set_frame( weather_layer, GRect(REL_CLOCK_TIME_LEFT, weather_offset, DEVICE_WIDTH, LAYOUT_SLOT_HEIGHT) );
 #endif
