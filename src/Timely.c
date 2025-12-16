@@ -198,9 +198,9 @@ static bool showing_statusbar = true;
 #define REL_CLOCK_DATE_HEIGHT    30 // date/time overlap, due to the way text is 'positioned'
 #define REL_CLOCK_DATE_WIDTH    140
 #define REL_CLOCK_TIME_LEFT       0
-#define REL_CLOCK_TIME_TOP        5  // Slightly adjusted for 50pt font (was 7)
-#define REL_CLOCK_TIME_HEIGHT    62 // Slightly increased for 50pt font (was 60)
-#define REL_CLOCK_SUBTEXT_TOP    57 // Slightly adjusted for 50pt font (was 56)
+#define REL_CLOCK_TIME_TOP        0  // Moved up for 56pt font
+#define REL_CLOCK_TIME_HEIGHT    68 // Increased for 56pt font
+#define REL_CLOCK_SUBTEXT_TOP    60 // Adjusted for 56pt font
 
 // Option to hide battery display and use larger time font
 #define HIDE_BATTERY_DISPLAY     1  // Set to 1 to hide battery, 0 to show
@@ -385,8 +385,14 @@ void weather_layer_update_callback(Layer *me, GContext* ctx) {
   snprintf(cond_current, sizeof(cond_current), "%s", weather.condition);
 
   setColors(ctx);
+#if HIDE_BATTERY_DISPLAY
+  // Weather moved to top-left corner (next to date) when battery is hidden
+  graphics_draw_text(ctx, cond_current, climacons, GRect(2,-8,34,34), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL); 
+  graphics_draw_text(ctx, temp_current, fonts_get_system_font(FONT_KEY_GOTHIC_18), GRect(0,18,38,24), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+#else
   graphics_draw_text(ctx, cond_current, climacons, GRect(2,16,34,34), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL); 
-  graphics_draw_text(ctx, temp_current, fonts_get_system_font(FONT_KEY_GOTHIC_24), GRect(2,42,36,36), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL); 
+  graphics_draw_text(ctx, temp_current, fonts_get_system_font(FONT_KEY_GOTHIC_24), GRect(2,42,36,36), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+#endif 
   if (debug.general) { app_log(APP_LOG_LEVEL_DEBUG, __FILE__, __LINE__, "Weather redrawing: %d, %s", weather.current, weather.condition); }
 }
 
@@ -1554,7 +1560,7 @@ static void window_load(Window *window) {
   time_layer = text_layer_create( GRect(REL_CLOCK_TIME_LEFT, REL_CLOCK_TIME_TOP, DEVICE_WIDTH - 2, REL_CLOCK_TIME_HEIGHT) ); // see position_time_layer()
 #if HIDE_BATTERY_DISPLAY
   // Use larger font when battery display is hidden
-  set_layer_attr_cfont(time_layer, RESOURCE_ID_FONT_FUTURA_CONDENSED_50, GTextAlignmentCenter);
+  set_layer_attr_cfont(time_layer, RESOURCE_ID_FONT_FUTURA_CONDENSED_56, GTextAlignmentCenter);
 #else
   set_layer_attr_cfont(time_layer, RESOURCE_ID_FONT_FUTURA_CONDENSED_48, GTextAlignmentCenter);
 #endif
