@@ -198,9 +198,12 @@ static bool showing_statusbar = true;
 #define REL_CLOCK_DATE_HEIGHT    30 // date/time overlap, due to the way text is 'positioned'
 #define REL_CLOCK_DATE_WIDTH    140
 #define REL_CLOCK_TIME_LEFT       0
-#define REL_CLOCK_TIME_TOP        7
-#define REL_CLOCK_TIME_HEIGHT    60 // date/time overlap, due to the way text is 'positioned'
-#define REL_CLOCK_SUBTEXT_TOP    56 // time/ampm overlap, due to the way text is 'positioned'
+#define REL_CLOCK_TIME_TOP        2  // Adjusted for larger font (was 7)
+#define REL_CLOCK_TIME_HEIGHT    65 // Increased for larger font (was 60)
+#define REL_CLOCK_SUBTEXT_TOP    58 // Adjusted for larger font (was 56)
+
+// Option to hide battery display and use larger time font
+#define HIDE_BATTERY_DISPLAY     1  // Set to 1 to hide battery, 0 to show
 
 #define SLOT_ID_CLOCK_1  0
 #define SLOT_ID_CALENDAR 1
@@ -747,17 +750,54 @@ void update_month_text(TextLayer *which_layer) {
   text_layer_set_text(which_layer, lang_months.monthsNames[currentTime->tm_mon]);
 }
 
+// Helper function to calculate ISO 8601 week number
+// Returns the ISO week number (1-53) for the given tm struct
+static int get_iso_week_number(const struct tm *t) {
+  // Work with a copy to avoid modifying the original
+  struct tm tm_copy = *t;
+  
+  // Ensure tm_wday and tm_yday are properly set
+  mktime(&tm_copy);
+  
+  // ISO 8601: Week starts on Monday (Monday=0, Sunday=6)
+  // tm_wday: Sunday=0, Monday=1, ..., Saturday=6
+  // Convert to ISO day of week: Monday=0, Tuesday=1, ..., Sunday=6
+  int day_of_week = (tm_copy.tm_wday + 6) % 7;
+  
+  // Find the Thursday of the current week
+  // ISO 8601: Week 1 is the week containing the first Thursday of the year
+  // Offset to Monday of current week, then add 3 to get Thursday
+  tm_copy.tm_mday -= day_of_week;  // Go to Monday
+  tm_copy.tm_mday += 3;            // Go to Thursday
+  
+  // Recalculate to get the correct year and day of year for Thursday
+  mktime(&tm_copy);
+  
+  // Week number is (day_of_year / 7) + 1
+  // tm_yday is 0-based (Jan 1 = 0)
+  int week = (tm_copy.tm_yday / 7) + 1;
+  
+  return week;
+}
+
 void update_week_text(TextLayer *which_layer) {
   static char week_text[] = "W00";
-  char week_format[] = "W%V"; // V = ISO 8601 week number (00-53)
-  if (settings.week_format == 1) {
-    // U = Week number with the first Sunday as the first day of week one (00-53)
-    week_format[2] = 'U';
-  } else if (settings.week_format == 2) {
-    // W = Week number with the first Monday as the first day of week one (00-53)
-    week_format[2] = 'W';
+  int week_num;
+  
+  if (settings.week_format == 0) {
+    // ISO 8601 week number - use our custom calculation
+    week_num = get_iso_week_number(currentTime);
+    snprintf(week_text, sizeof(week_text), "W%02d", week_num);
+  } else {
+    // For non-ISO formats, use strftime (these work correctly)
+    char week_format[] = "W%U"; // Default to %U
+    if (settings.week_format == 2) {
+      // W = Week number with the first Monday as the first day of week one (00-53)
+      week_format[2] = 'W';
+    }
+    // settings.week_format == 1: U = Week number with first Sunday as first day of week one
+    strftime(week_text, sizeof(week_text), week_format, currentTime);
   }
-  strftime(week_text, sizeof(week_text), week_format, currentTime);
   text_layer_set_text(which_layer, week_text);
 }
 
@@ -1023,9 +1063,10 @@ void toggle_statusbar() {
     }
     // icon(s)
     layer_add_child(statusbar, bitmap_layer_get_layer(bmp_charging_layer));
-    //layer_set_frame( bitmap_layer_get_layer(bmp_charging_layer), GRect(STAT_CHRG_ICON_LEFT, STAT_CHRG_ICON_TOP, 20, 20) );
+#if !HIDE_BATTERY_DISPLAY
     layer_add_child(statusbar, battery_layer);
     layer_add_child(statusbar, effect_layer_get_layer(battery_meter_layer));
+#endif
   } else {
     // status
     layer_set_hidden(statusbar, true);
@@ -1034,9 +1075,10 @@ void toggle_statusbar() {
     text_layer_set_text_alignment(date_layer, GTextAlignmentCenter);
     // icon(s)
     layer_add_child(datetime_layer, bitmap_layer_get_layer(bmp_charging_layer));
-    //layer_set_frame( bitmap_layer_get_layer(bmp_charging_layer), GRect(124, -2, 20, 20) );
+#if !HIDE_BATTERY_DISPLAY
     layer_add_child(datetime_layer, battery_layer);
     layer_add_child(datetime_layer, effect_layer_get_layer(battery_meter_layer));
+#endif
   }
   position_date_layer();
 }
@@ -1071,6 +1113,11 @@ void slot_bot_layer_update_callback(Layer *me, GContext* ctx) {
 }
 
 void battery_layer_update_callback(Layer *me, GContext* ctx) {
+#if HIDE_BATTERY_DISPLAY
+  // Battery display hidden - do nothing
+  (void)me;
+  (void)ctx;
+#else
 // simply draw the battery outline here - the text is a different layer, and we then 'fill' it with an inverterLayer
   setColors(ctx);
 // battery outline
@@ -1080,6 +1127,7 @@ void battery_layer_update_callback(Layer *me, GContext* ctx) {
                                 STAT_BATT_TOP + (STAT_BATT_HEIGHT - STAT_BATT_NIB_HEIGHT)/2,
                                 STAT_BATT_NIB_WIDTH,
                                 STAT_BATT_NIB_HEIGHT));
+#endif
 }
 
 static void request_weather(void *data) {
@@ -1443,7 +1491,9 @@ static void window_load(Window *window) {
 
   battery_layer = layer_create(stat_bounds);
   layer_set_update_proc(battery_layer, battery_layer_update_callback);
+#if !HIDE_BATTERY_DISPLAY
   layer_add_child(statusbar, battery_layer);
+#endif
 
   datetime_layer = layer_create(slot_top_bounds);
   layer_set_update_proc(datetime_layer, datetime_layer_update_callback);
@@ -1472,7 +1522,12 @@ static void window_load(Window *window) {
   layer_add_child(datetime_layer, weather_layer);
 
   time_layer = text_layer_create( GRect(REL_CLOCK_TIME_LEFT, REL_CLOCK_TIME_TOP, DEVICE_WIDTH - 2, REL_CLOCK_TIME_HEIGHT) ); // see position_time_layer()
+#if HIDE_BATTERY_DISPLAY
+  // Use larger font when battery display is hidden
+  set_layer_attr_cfont(time_layer, RESOURCE_ID_FONT_FUTURA_CONDENSED_53, GTextAlignmentCenter);
+#else
   set_layer_attr_cfont(time_layer, RESOURCE_ID_FONT_FUTURA_CONDENSED_48, GTextAlignmentCenter);
+#endif
   toggle_weather();
   position_time_layer(); // make use of our whitespace, if we have it...
   update_time_text();
@@ -1512,7 +1567,9 @@ static void window_load(Window *window) {
   set_layer_attr_sfont(text_battery_layer, FONT_KEY_GOTHIC_14, GTextAlignmentCenter);
   text_layer_set_text(text_battery_layer, "-");
 
+#if !HIDE_BATTERY_DISPLAY
   layer_add_child(statusbar, text_layer_get_layer(text_battery_layer));
+#endif
 
   set_unifont();
 

@@ -162,6 +162,12 @@
       },
       {
         "type": "font",
+        "name": "FONT_FUTURA_CONDENSED_53",
+        "characterRegex": "[0-9:]",
+        "file": "fonts/futura_condensed_bold-webfont.ttf"
+      },
+      {
+        "type": "font",
         "name": "FONT_CLIMACONS_32",
         "file": "fonts/Climacons.ttf"
       }
