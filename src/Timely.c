@@ -1077,7 +1077,12 @@ void statusbar_visible() {
 void toggle_weather() {
   if (adv_settings.weather_update) {
     //if (!showing_statusbar) { text_layer_set_text_alignment(date_layer, GTextAlignmentRight); }
+#if HIDE_BATTERY_DISPLAY
+    // Keep time centered when battery is hidden (weather is in top-left)
+    text_layer_set_text_alignment(time_layer, GTextAlignmentCenter);
+#else
     text_layer_set_text_alignment(time_layer, GTextAlignmentRight);
+#endif
     layer_set_hidden(weather_layer, false);
   } else {
     layer_set_hidden(weather_layer, true);
@@ -1553,11 +1558,12 @@ static void window_load(Window *window) {
   update_date_text();
   layer_add_child(datetime_layer, text_layer_get_layer(date_layer));
 
+  time_layer = text_layer_create( GRect(REL_CLOCK_TIME_LEFT, REL_CLOCK_TIME_TOP, DEVICE_WIDTH - 2, REL_CLOCK_TIME_HEIGHT) ); // see position_time_layer()
+
+  // Weather layer created after time_layer so it renders on top (in front)
   weather_layer = layer_create(slot_top_bounds);
   layer_set_update_proc(weather_layer, weather_layer_update_callback);
   layer_add_child(datetime_layer, weather_layer);
-
-  time_layer = text_layer_create( GRect(REL_CLOCK_TIME_LEFT, REL_CLOCK_TIME_TOP, DEVICE_WIDTH - 2, REL_CLOCK_TIME_HEIGHT) ); // see position_time_layer()
 #if HIDE_BATTERY_DISPLAY
   // Use larger font when battery display is hidden
   set_layer_attr_cfont(time_layer, RESOURCE_ID_FONT_FUTURA_CONDENSED_56, GTextAlignmentCenter);
