@@ -162,7 +162,7 @@
       },
       {
         "type": "font",
-        "name": "FONT_FUTURA_CONDENSED_53",
+        "name": "FONT_FUTURA_CONDENSED_50",
         "characterRegex": "[0-9:]",
         "file": "fonts/futura_condensed_bold-webfont.ttf"
       },

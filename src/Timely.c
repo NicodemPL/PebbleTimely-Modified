@@ -198,9 +198,9 @@ static bool showing_statusbar = true;
 #define REL_CLOCK_DATE_HEIGHT    30 // date/time overlap, due to the way text is 'positioned'
 #define REL_CLOCK_DATE_WIDTH    140
 #define REL_CLOCK_TIME_LEFT       0
-#define REL_CLOCK_TIME_TOP        2  // Adjusted for larger font (was 7)
-#define REL_CLOCK_TIME_HEIGHT    65 // Increased for larger font (was 60)
-#define REL_CLOCK_SUBTEXT_TOP    58 // Adjusted for larger font (was 56)
+#define REL_CLOCK_TIME_TOP        5  // Slightly adjusted for 50pt font (was 7)
+#define REL_CLOCK_TIME_HEIGHT    62 // Slightly increased for 50pt font (was 60)
+#define REL_CLOCK_SUBTEXT_TOP    57 // Slightly adjusted for 50pt font (was 56)
 
 // Option to hide battery display and use larger time font
 #define HIDE_BATTERY_DISPLAY     1  // Set to 1 to hide battery, 0 to show
@@ -784,19 +784,22 @@ void update_week_text(TextLayer *which_layer) {
   static char week_text[] = "W00";
   int week_num;
   
+  // Always use custom ISO 8601 calculation for week_format 0
+  // The strftime %V implementation is buggy on Pebble SDK
   if (settings.week_format == 0) {
     // ISO 8601 week number - use our custom calculation
     week_num = get_iso_week_number(currentTime);
     snprintf(week_text, sizeof(week_text), "W%02d", week_num);
+  } else if (settings.week_format == 1) {
+    // U = Week number with first Sunday as first day of week one (00-53)
+    strftime(week_text, sizeof(week_text), "W%U", currentTime);
+  } else if (settings.week_format == 2) {
+    // W = Week number with the first Monday as the first day of week one (00-53)
+    strftime(week_text, sizeof(week_text), "W%W", currentTime);
   } else {
-    // For non-ISO formats, use strftime (these work correctly)
-    char week_format[] = "W%U"; // Default to %U
-    if (settings.week_format == 2) {
-      // W = Week number with the first Monday as the first day of week one (00-53)
-      week_format[2] = 'W';
-    }
-    // settings.week_format == 1: U = Week number with first Sunday as first day of week one
-    strftime(week_text, sizeof(week_text), week_format, currentTime);
+    // Default fallback: use ISO calculation
+    week_num = get_iso_week_number(currentTime);
+    snprintf(week_text, sizeof(week_text), "W%02d", week_num);
   }
   text_layer_set_text(which_layer, week_text);
 }
@@ -1524,7 +1527,7 @@ static void window_load(Window *window) {
   time_layer = text_layer_create( GRect(REL_CLOCK_TIME_LEFT, REL_CLOCK_TIME_TOP, DEVICE_WIDTH - 2, REL_CLOCK_TIME_HEIGHT) ); // see position_time_layer()
 #if HIDE_BATTERY_DISPLAY
   // Use larger font when battery display is hidden
-  set_layer_attr_cfont(time_layer, RESOURCE_ID_FONT_FUTURA_CONDENSED_53, GTextAlignmentCenter);
+  set_layer_attr_cfont(time_layer, RESOURCE_ID_FONT_FUTURA_CONDENSED_50, GTextAlignmentCenter);
 #else
   set_layer_attr_cfont(time_layer, RESOURCE_ID_FONT_FUTURA_CONDENSED_48, GTextAlignmentCenter);
 #endif
