@@ -386,8 +386,8 @@ void weather_layer_update_callback(Layer *me, GContext* ctx) {
 
   setColors(ctx);
 #if HIDE_BATTERY_DISPLAY
-  // Weather in top-left of datetime area
-  graphics_draw_text(ctx, cond_current, climacons, GRect(0,0,30,30), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+  // Weather icon in statusbar (top-left)
+  graphics_draw_text(ctx, cond_current, climacons, GRect(0,-2,24,24), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
 #else
   graphics_draw_text(ctx, cond_current, climacons, GRect(2,16,34,34), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL); 
   graphics_draw_text(ctx, temp_current, fonts_get_system_font(FONT_KEY_GOTHIC_24), GRect(2,42,36,36), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
@@ -1050,8 +1050,8 @@ void position_time_layer() {
   layer_set_frame( text_layer_get_layer(time_layer), GRect(REL_CLOCK_TIME_LEFT, REL_CLOCK_TIME_TOP + time_offset, DEVICE_WIDTH, REL_CLOCK_TIME_HEIGHT) );
   (void)weather_offset; // Suppress unused warning when HIDE_BATTERY_DISPLAY is set
 #if HIDE_BATTERY_DISPLAY
-  // Position weather layer at top-left within datetime_layer (y=0 is top of slot_top)
-  layer_set_frame( weather_layer, GRect(0, 0, 40, 40) );
+  // Position weather layer at top-left within statusbar
+  layer_set_frame( weather_layer, GRect(0, 0, 24, 24) );
 #else
   layer_set_frame( weather_layer, GRect(REL_CLOCK_TIME_LEFT, weather_offset, DEVICE_WIDTH, LAYOUT_SLOT_HEIGHT) );
 #endif
@@ -1074,6 +1074,10 @@ void datetime_layer_update_callback(Layer *me, GContext* ctx) {
 }
 
 void statusbar_visible() {
+#if HIDE_BATTERY_DISPLAY
+  // Always show statusbar when battery display is hidden (for weather icon)
+  showing_statusbar = true;
+#else
   if (adv_settings.showStatus == 0) {
     showing_statusbar = false;
   } else if (adv_settings.showStatus == 1) {
@@ -1083,6 +1087,7 @@ void statusbar_visible() {
   } else {
     showing_statusbar = false;
   }
+#endif
 }
 
 void toggle_weather() {
@@ -1613,8 +1618,13 @@ static void window_load(Window *window) {
 
   update_datetime_subtext();
 
-  // Add weather_layer to datetime_layer LAST so it renders on top
+#if HIDE_BATTERY_DISPLAY
+  // Add weather_layer to statusbar (which is always visible now)
+  layer_add_child(statusbar, weather_layer);
+#else
+  // Add weather_layer to datetime_layer
   layer_add_child(datetime_layer, weather_layer);
+#endif
 
   text_connection_layer = text_layer_create( GRect(20+STAT_BT_ICON_LEFT, 0, 72, 22) ); // see position_connection_layer()
   set_layer_attr_sfont(text_connection_layer, FONT_KEY_GOTHIC_18, GTextAlignmentLeft);
