@@ -193,21 +193,17 @@ static bool showing_statusbar = true;
 #define STAT_CHRG_ICON_TOP    2
 
 // relative coordinates (relative to SLOTs)
-#if HIDE_BATTERY_DISPLAY
-#define REL_CLOCK_DATE_LEFT      40 // Moved right to make room for weather icon
-#else
+// Option to hide battery display and use larger time font
+#define HIDE_BATTERY_DISPLAY     1  // Set to 1 to hide battery, 0 to show
+
 #define REL_CLOCK_DATE_LEFT       2
-#endif
 #define REL_CLOCK_DATE_TOP        0
 #define REL_CLOCK_DATE_HEIGHT    30 // date/time overlap, due to the way text is 'positioned'
-#define REL_CLOCK_DATE_WIDTH    102 // Narrower to fit in top-right
+#define REL_CLOCK_DATE_WIDTH    140
 #define REL_CLOCK_TIME_LEFT       0
 #define REL_CLOCK_TIME_TOP        0  // Moved up for 56pt font
 #define REL_CLOCK_TIME_HEIGHT    68 // Increased for 56pt font
 #define REL_CLOCK_SUBTEXT_TOP    57 // Adjusted for 56pt font
-
-// Option to hide battery display and use larger time font
-#define HIDE_BATTERY_DISPLAY     1  // Set to 1 to hide battery, 0 to show
 
 #define SLOT_ID_CLOCK_1  0
 #define SLOT_ID_CALENDAR 1
@@ -1022,7 +1018,12 @@ void position_date_layer() {
       date_vert_offset = -5;
     }
   }
+#if HIDE_BATTERY_DISPLAY
+  // Position date at top-right, leaving room for weather icon on left
+  layer_set_frame( text_layer_get_layer(date_layer), GRect(40, REL_CLOCK_DATE_TOP + date_vert_offset, 102, REL_CLOCK_DATE_HEIGHT) );
+#else
   layer_set_frame( text_layer_get_layer(date_layer), GRect(REL_CLOCK_DATE_LEFT, REL_CLOCK_DATE_TOP + date_vert_offset, REL_CLOCK_DATE_WIDTH, REL_CLOCK_DATE_HEIGHT) );
+#endif
 }
 
 void position_day_layer() {
@@ -1033,7 +1034,8 @@ void position_day_layer() {
   } else { // Standard font
     day_vert_offset = 0;
   }
-  layer_set_frame( text_layer_get_layer(day_layer), GRect(REL_CLOCK_DATE_LEFT, REL_CLOCK_SUBTEXT_TOP + day_vert_offset, REL_CLOCK_DATE_WIDTH, REL_CLOCK_DATE_HEIGHT) );
+  // Day layer (D350/R015) is centered between week and ampm
+  layer_set_frame( text_layer_get_layer(day_layer), GRect(40, REL_CLOCK_SUBTEXT_TOP + day_vert_offset, 64, 18) );
 }
 
 void position_time_layer() {
@@ -1591,14 +1593,14 @@ static void window_load(Window *window) {
   update_time_text();
   layer_add_child(datetime_layer, text_layer_get_layer(time_layer));
 
-  week_layer = text_layer_create( GRect(4, REL_CLOCK_SUBTEXT_TOP, 140, 18) );
+  week_layer = text_layer_create( GRect(2, REL_CLOCK_SUBTEXT_TOP, 40, 18) );
   set_layer_attr_sfont(week_layer, FONT_KEY_GOTHIC_14, GTextAlignmentLeft);
   layer_add_child(datetime_layer, text_layer_get_layer(week_layer));
   if ( settings.show_week == 0 ) {
     layer_set_hidden(text_layer_get_layer(week_layer), true);
   }
 
-  day_layer = text_layer_create( GRect(4, REL_CLOCK_SUBTEXT_TOP, REL_CLOCK_DATE_WIDTH, 18) ); // see position_day_layer()
+  day_layer = text_layer_create( GRect(40, REL_CLOCK_SUBTEXT_TOP, 64, 18) ); // see position_day_layer()
   set_layer_attr_sfont(day_layer, FONT_KEY_GOTHIC_14, GTextAlignmentCenter);
   position_day_layer(); // depends on font/language
   layer_add_child(datetime_layer, text_layer_get_layer(day_layer));
@@ -1606,7 +1608,7 @@ static void window_load(Window *window) {
     layer_set_hidden(text_layer_get_layer(day_layer), true);
   }
 
-  ampm_layer = text_layer_create( GRect(0, REL_CLOCK_SUBTEXT_TOP, 140, 18) );
+  ampm_layer = text_layer_create( GRect(104, REL_CLOCK_SUBTEXT_TOP, 38, 18) );
   set_layer_attr_sfont(ampm_layer, FONT_KEY_GOTHIC_14, GTextAlignmentRight);
   layer_add_child(datetime_layer, text_layer_get_layer(ampm_layer));
   if ( settings.show_am_pm == 0 ) {
