@@ -386,8 +386,9 @@ void weather_layer_update_callback(Layer *me, GContext* ctx) {
 
   setColors(ctx);
 #if HIDE_BATTERY_DISPLAY
-  // Weather icon in statusbar (top-left)
-  graphics_draw_text(ctx, cond_current, climacons, GRect(0,-2,24,24), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+  // Weather icon and temperature in statusbar (top-left)
+  graphics_draw_text(ctx, cond_current, climacons, GRect(0,-4,26,26), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+  graphics_draw_text(ctx, temp_current, fonts_get_system_font(FONT_KEY_GOTHIC_14), GRect(24,2,26,20), GTextOverflowModeWordWrap, GTextAlignmentLeft, NULL);
 #else
   graphics_draw_text(ctx, cond_current, climacons, GRect(2,16,34,34), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL); 
   graphics_draw_text(ctx, temp_current, fonts_get_system_font(FONT_KEY_GOTHIC_24), GRect(2,42,36,36), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
@@ -1050,8 +1051,8 @@ void position_time_layer() {
   layer_set_frame( text_layer_get_layer(time_layer), GRect(REL_CLOCK_TIME_LEFT, REL_CLOCK_TIME_TOP + time_offset, DEVICE_WIDTH, REL_CLOCK_TIME_HEIGHT) );
   (void)weather_offset; // Suppress unused warning when HIDE_BATTERY_DISPLAY is set
 #if HIDE_BATTERY_DISPLAY
-  // Position weather layer at top-left within statusbar
-  layer_set_frame( weather_layer, GRect(0, 0, 24, 24) );
+  // Position weather layer at top-left within statusbar (full statusbar width available now)
+  layer_set_frame( weather_layer, GRect(0, 0, 50, 24) );
 #else
   layer_set_frame( weather_layer, GRect(REL_CLOCK_TIME_LEFT, weather_offset, DEVICE_WIDTH, LAYOUT_SLOT_HEIGHT) );
 #endif
@@ -1532,7 +1533,9 @@ static void window_load(Window *window) {
   GRect slot_bot_bounds = layer_get_bounds(slot_bot);
 
   bmp_connection_layer = bitmap_layer_create( GRect(STAT_BT_ICON_LEFT, STAT_BT_ICON_TOP, 20, 20) );
+#if !HIDE_BATTERY_DISPLAY
   layer_add_child(statusbar, bitmap_layer_get_layer(bmp_connection_layer));
+#endif
   image_connection_icon = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BT_LINKED_ICON);
   image_noconnection_icon = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BT_NOLINK_ICON);
 
@@ -1630,7 +1633,9 @@ static void window_load(Window *window) {
   set_layer_attr_sfont(text_connection_layer, FONT_KEY_GOTHIC_18, GTextAlignmentLeft);
   update_connection();
   position_connection_layer(); // depends on font/language
+#if !HIDE_BATTERY_DISPLAY
   layer_add_child(statusbar, text_layer_get_layer(text_connection_layer));
+#endif
 
   text_battery_layer = text_layer_create( GRect(STAT_BATT_LEFT, STAT_BATT_TOP-2, STAT_BATT_WIDTH, STAT_BATT_HEIGHT) );
   set_layer_attr_sfont(text_battery_layer, FONT_KEY_GOTHIC_14, GTextAlignmentCenter);
