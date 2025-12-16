@@ -1583,6 +1583,9 @@ static void window_load(Window *window) {
 #else
   set_layer_attr_cfont(time_layer, RESOURCE_ID_FONT_FUTURA_CONDENSED_48, GTextAlignmentCenter);
 #endif
+  // Create weather_layer early so toggle_weather can access it
+  weather_layer = layer_create(slot_top_bounds);
+  layer_set_update_proc(weather_layer, weather_layer_update_callback);
   toggle_weather();
   position_time_layer(); // make use of our whitespace, if we have it...
   update_time_text();
@@ -1612,9 +1615,7 @@ static void window_load(Window *window) {
 
   update_datetime_subtext();
 
-  // Weather layer created LAST so it renders on top of everything (including date)
-  weather_layer = layer_create(slot_top_bounds);
-  layer_set_update_proc(weather_layer, weather_layer_update_callback);
+  // Add weather_layer to datetime_layer LAST so it renders on top of everything
   layer_add_child(datetime_layer, weather_layer);
 
   text_connection_layer = text_layer_create( GRect(20+STAT_BT_ICON_LEFT, 0, 72, 22) ); // see position_connection_layer()
