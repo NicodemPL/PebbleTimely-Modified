@@ -193,14 +193,18 @@ static bool showing_statusbar = true;
 #define STAT_CHRG_ICON_TOP    2
 
 // relative coordinates (relative to SLOTs)
+#if HIDE_BATTERY_DISPLAY
+#define REL_CLOCK_DATE_LEFT      40 // Moved right to make room for weather icon
+#else
 #define REL_CLOCK_DATE_LEFT       2
+#endif
 #define REL_CLOCK_DATE_TOP        0
 #define REL_CLOCK_DATE_HEIGHT    30 // date/time overlap, due to the way text is 'positioned'
-#define REL_CLOCK_DATE_WIDTH    140
+#define REL_CLOCK_DATE_WIDTH    102 // Narrower to fit in top-right
 #define REL_CLOCK_TIME_LEFT       0
 #define REL_CLOCK_TIME_TOP        0  // Moved up for 56pt font
 #define REL_CLOCK_TIME_HEIGHT    68 // Increased for 56pt font
-#define REL_CLOCK_SUBTEXT_TOP    56 // Adjusted for 56pt font (moved up to prevent bottom trimming)
+#define REL_CLOCK_SUBTEXT_TOP    57 // Adjusted for 56pt font
 
 // Option to hide battery display and use larger time font
 #define HIDE_BATTERY_DISPLAY     1  // Set to 1 to hide battery, 0 to show
@@ -1560,7 +1564,12 @@ static void window_load(Window *window) {
   bottom_toggle = app_timer_register(2000, &toggle_slot_bottom, (void*)calendar_layer); // queue calendar to reappear in 2 seconds
 
   date_layer = text_layer_create( GRect(REL_CLOCK_DATE_LEFT, REL_CLOCK_DATE_TOP, REL_CLOCK_DATE_WIDTH, REL_CLOCK_DATE_HEIGHT) ); // see position_date_layer()
+#if HIDE_BATTERY_DISPLAY
+  // Right-align date when it's moved to top-right corner
+  set_layer_attr_sfont(date_layer, FONT_KEY_GOTHIC_24, GTextAlignmentRight);
+#else
   set_layer_attr_sfont(date_layer, FONT_KEY_GOTHIC_24, GTextAlignmentCenter);
+#endif
   position_date_layer(); // depends on font/language
   update_date_text();
   layer_add_child(datetime_layer, text_layer_get_layer(date_layer));
