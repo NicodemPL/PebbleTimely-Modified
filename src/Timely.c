@@ -1018,8 +1018,8 @@ void position_date_layer() {
     }
   }
 #if HIDE_BATTERY_DISPLAY
-  // Position date at top-right, leaving room for weather icon on left (3 pixels higher total)
-  layer_set_frame( text_layer_get_layer(date_layer), GRect(40, REL_CLOCK_DATE_TOP + date_vert_offset - 3, 102, REL_CLOCK_DATE_HEIGHT) );
+  // Position date at top-right, leaving room for weather icon on left (1 pixel higher total)
+  layer_set_frame( text_layer_get_layer(date_layer), GRect(40, REL_CLOCK_DATE_TOP + date_vert_offset - 1, 102, REL_CLOCK_DATE_HEIGHT) );
 #else
   layer_set_frame( text_layer_get_layer(date_layer), GRect(REL_CLOCK_DATE_LEFT, REL_CLOCK_DATE_TOP + date_vert_offset, REL_CLOCK_DATE_WIDTH, REL_CLOCK_DATE_HEIGHT) );
 #endif
