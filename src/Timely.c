@@ -386,10 +386,9 @@ void weather_layer_update_callback(Layer *me, GContext* ctx) {
 
   setColors(ctx);
 #if HIDE_BATTERY_DISPLAY
-  // Weather moved to top-left corner when battery is hidden
-  // Draw icon at top, temperature below it
-  graphics_draw_text(ctx, cond_current, climacons, GRect(0,-6,36,36), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL); 
-  graphics_draw_text(ctx, temp_current, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD), GRect(0,22,38,20), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+  // Weather in statusbar (top-left, 24px height)
+  // Draw icon only (no room for temp in statusbar)
+  graphics_draw_text(ctx, cond_current, climacons, GRect(0,-4,24,24), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
 #else
   graphics_draw_text(ctx, cond_current, climacons, GRect(2,16,34,34), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL); 
   graphics_draw_text(ctx, temp_current, fonts_get_system_font(FONT_KEY_GOTHIC_24), GRect(2,42,36,36), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
@@ -1052,8 +1051,8 @@ void position_time_layer() {
   layer_set_frame( text_layer_get_layer(time_layer), GRect(REL_CLOCK_TIME_LEFT, REL_CLOCK_TIME_TOP + time_offset, DEVICE_WIDTH, REL_CLOCK_TIME_HEIGHT) );
   (void)weather_offset; // Suppress unused warning when HIDE_BATTERY_DISPLAY is set
 #if HIDE_BATTERY_DISPLAY
-  // Position weather layer at top-left, above the date layer area
-  layer_set_frame( weather_layer, GRect(0, -10, 40, 50) );
+  // Position weather layer at top-left within statusbar (y=0 to 24)
+  layer_set_frame( weather_layer, GRect(0, 0, 40, 24) );
 #else
   layer_set_frame( weather_layer, GRect(REL_CLOCK_TIME_LEFT, weather_offset, DEVICE_WIDTH, LAYOUT_SLOT_HEIGHT) );
 #endif
@@ -1615,8 +1614,13 @@ static void window_load(Window *window) {
 
   update_datetime_subtext();
 
-  // Add weather_layer to datetime_layer LAST so it renders on top of everything
+#if HIDE_BATTERY_DISPLAY
+  // Add weather_layer to statusbar so it appears at the very top-left
+  layer_add_child(statusbar, weather_layer);
+#else
+  // Add weather_layer to datetime_layer
   layer_add_child(datetime_layer, weather_layer);
+#endif
 
   text_connection_layer = text_layer_create( GRect(20+STAT_BT_ICON_LEFT, 0, 72, 22) ); // see position_connection_layer()
   set_layer_attr_sfont(text_connection_layer, FONT_KEY_GOTHIC_18, GTextAlignmentLeft);
