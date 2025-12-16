@@ -200,7 +200,7 @@ static bool showing_statusbar = true;
 #define REL_CLOCK_TIME_LEFT       0
 #define REL_CLOCK_TIME_TOP        0  // Moved up for 56pt font
 #define REL_CLOCK_TIME_HEIGHT    68 // Increased for 56pt font
-#define REL_CLOCK_SUBTEXT_TOP    60 // Adjusted for 56pt font
+#define REL_CLOCK_SUBTEXT_TOP    56 // Adjusted for 56pt font (moved up to prevent bottom trimming)
 
 // Option to hide battery display and use larger time font
 #define HIDE_BATTERY_DISPLAY     1  // Set to 1 to hide battery, 0 to show
@@ -386,9 +386,10 @@ void weather_layer_update_callback(Layer *me, GContext* ctx) {
 
   setColors(ctx);
 #if HIDE_BATTERY_DISPLAY
-  // Weather moved to top-left corner (next to date) when battery is hidden
-  graphics_draw_text(ctx, cond_current, climacons, GRect(2,-8,34,34), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL); 
-  graphics_draw_text(ctx, temp_current, fonts_get_system_font(FONT_KEY_GOTHIC_18), GRect(0,18,38,24), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
+  // Weather moved to top-left corner when battery is hidden
+  // Draw icon at top, temperature below it
+  graphics_draw_text(ctx, cond_current, climacons, GRect(0,-6,36,36), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL); 
+  graphics_draw_text(ctx, temp_current, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD), GRect(0,22,38,20), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
 #else
   graphics_draw_text(ctx, cond_current, climacons, GRect(2,16,34,34), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL); 
   graphics_draw_text(ctx, temp_current, fonts_get_system_font(FONT_KEY_GOTHIC_24), GRect(2,42,36,36), GTextOverflowModeWordWrap, GTextAlignmentCenter, NULL);
@@ -1043,7 +1044,13 @@ void position_time_layer() {
     weather_offset = -10;
   }
   layer_set_frame( text_layer_get_layer(time_layer), GRect(REL_CLOCK_TIME_LEFT, REL_CLOCK_TIME_TOP + time_offset, DEVICE_WIDTH, REL_CLOCK_TIME_HEIGHT) );
+  (void)weather_offset; // Suppress unused warning when HIDE_BATTERY_DISPLAY is set
+#if HIDE_BATTERY_DISPLAY
+  // Position weather layer at top-left, above the date layer area
+  layer_set_frame( weather_layer, GRect(0, -10, 40, 50) );
+#else
   layer_set_frame( weather_layer, GRect(REL_CLOCK_TIME_LEFT, weather_offset, DEVICE_WIDTH, LAYOUT_SLOT_HEIGHT) );
+#endif
 }
 
 void update_datetime_subtext() {
