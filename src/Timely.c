@@ -1577,11 +1577,6 @@ static void window_load(Window *window) {
   layer_add_child(datetime_layer, text_layer_get_layer(date_layer));
 
   time_layer = text_layer_create( GRect(REL_CLOCK_TIME_LEFT, REL_CLOCK_TIME_TOP, DEVICE_WIDTH - 2, REL_CLOCK_TIME_HEIGHT) ); // see position_time_layer()
-
-  // Weather layer created after time_layer so it renders on top (in front)
-  weather_layer = layer_create(slot_top_bounds);
-  layer_set_update_proc(weather_layer, weather_layer_update_callback);
-  layer_add_child(datetime_layer, weather_layer);
 #if HIDE_BATTERY_DISPLAY
   // Use larger font when battery display is hidden
   set_layer_attr_cfont(time_layer, RESOURCE_ID_FONT_FUTURA_CONDENSED_56, GTextAlignmentCenter);
@@ -1616,6 +1611,11 @@ static void window_load(Window *window) {
   }
 
   update_datetime_subtext();
+
+  // Weather layer created LAST so it renders on top of everything (including date)
+  weather_layer = layer_create(slot_top_bounds);
+  layer_set_update_proc(weather_layer, weather_layer_update_callback);
+  layer_add_child(datetime_layer, weather_layer);
 
   text_connection_layer = text_layer_create( GRect(20+STAT_BT_ICON_LEFT, 0, 72, 22) ); // see position_connection_layer()
   set_layer_attr_sfont(text_connection_layer, FONT_KEY_GOTHIC_18, GTextAlignmentLeft);
